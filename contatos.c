@@ -23,6 +23,19 @@ GtkEntry         *inpName;
 GtkEntry         *inpPhoneNumber;
 GtkEntry         *inpEmail;
 
+void on_btnSearch_clicked(){}
+
+void on_btnGoRegister_clicked(){
+    gtk_stack_set_visible_child_name(viewStack, "view_register"); // Set "view_register" as visible
+}
+
+void on_btnReloadList_clicked(){}
+
+void on_btnAddRegister_clicked(){}
+
+void on_btnGoBack_clicked(){}
+
+
 void startApplication(GtkApplication *app, gpointer user_data)
 {
 
@@ -36,6 +49,16 @@ void startApplication(GtkApplication *app, gpointer user_data)
     inpPhoneNumber   = GTK_ENTRY(gtk_builder_get_object(builder, "inpPhoneNumber"));
     inpEmail         = GTK_ENTRY(gtk_builder_get_object(builder, "inpEmail"));
 
+    gtk_builder_add_callback_symbols(
+        builder,
+        "on_btnSearch_clicked",       G_CALLBACK(on_btnSearch_clicked),
+        "on_btnGoRegister_clicked",       G_CALLBACK(on_btnGoRegister_clicked),
+        "on_btnReloadList_clicked",    G_CALLBACK(on_btnReloadList_clicked),
+        "on_btnGoBack_clicked", G_CALLBACK(on_btnGoBack_clicked),
+        "on_btnAddRegister_clicked",        G_CALLBACK(on_btnAddRegister_clicked),
+        NULL
+    );
+    gtk_builder_connect_signals(builder, NULL);
 
     /* Set the app to show on Window. The application will be kept alive for at least as long as it has
       any windows associated with it (see g_application_hold() for a way to keep it alive without windows). */
