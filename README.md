@@ -2,7 +2,7 @@
 
 Este é um projeto proposto na disciplina de **Estrutura de Dados 1** do [**Instituto de Informática**](https://inf.ufg.br/) da [**Universidade Federal de Goiás**](https://www.ufg.br/).
 
-É um aplicativo de contatos que contém com nome, telefone, email. Também é possível buscar um contato.
+É um aplicativo de contatos que salva as informações **nome**, **telefone**, **email**. Também é possível buscar um contato.
 
 Foi desenvolvido usando:
 - Linguagem [`c`](https://en.wikipedia.org/wiki/C_(programming_language))
@@ -28,7 +28,7 @@ Instale gerenciador de pacotes [Msys2](https://www.msys2.org/).
 
 Instalando git, make, MinGW, Gtk
 ```powershell
-> pacman -S git make mingw-w64-gcc mingw-w64-x86_64-gtk3
+> pacman -S git make mingw-w64-x86_64-gcc mingw-w64-x86_64-gtk3
 ```
 
 * No **Ubuntu, Debian, Mint, PopOS**...</br>
@@ -49,7 +49,7 @@ $ brew install gtk+3
 ### Compilando e executando
 Basta clonar o repositório e utilizar o comando make para compilar
 ```bash
-$ git clone https://gitlab.com/exercicios-estrutura-de-dados/contatos.git
+$ git clone https://github.com/diogoborges14/contatos.git
 $ cd contatos/
 $ make
 $ /contatos
