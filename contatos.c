@@ -17,6 +17,7 @@
 GtkBuilder       *builder;
 GtkWindow        *mainWindow;
 GtkStack         *viewStack;
+GtkTreeView      *treeView;
 GtkListStore     *contactList;
 GtkMessageDialog *msgBox;
 GtkEntry         *inpName;
@@ -38,10 +39,44 @@ void showMsgBox(char text[100], char secondary_text[100], char icon_name[100])
     gtk_widget_hide(GTK_WIDGET(msgBox));
 }
 
-void on_btnSearch_clicked(){}
+void on_inpSearch_changed(GtkSearchEntry *inpSearch, gpointer data){
+    g_print("Input changed\n");
+}
+
+void on_btnSearch_clicked(){
+    g_print("btnSearch pressed\n");
+}
 
 void on_btnGoRegister_clicked(){
     gtk_stack_set_visible_child_name(viewStack, "view_register"); // Set "view_register" as visible
+}
+
+void on_btnRemove_clicked()
+{
+    int              selectedId = 0;
+    GtkTreeIter      iter;
+    GtkTreeModel     *model;
+    GtkTreeSelection *selectionObj = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeView));
+
+    int isValid = gtk_tree_selection_get_selected(selectionObj, &model, &iter);
+
+    if(isValid){
+        gtk_tree_model_get(model, &iter,
+                           0, &selectedId, 
+                           -1);
+        USER *aux = headUser;
+        USER *prev = headUser;
+        while( (aux->next != NULL) && (aux->id != selectedId) ){
+            prev = aux;
+            aux = aux->next;
+        }
+        if(aux->id == selectedId)
+            prev->next = aux->next;
+        if(aux != NULL)
+            free(aux);
+
+        gtk_list_store_remove(contactList, &iter); // Remove from view
+    }
 }
 
 void on_btnReloadList_clicked()
@@ -55,6 +90,7 @@ void on_btnReloadList_clicked()
     while(auxiliarUser->next != NULL){
         gtk_list_store_append(contactList, &iter);
         gtk_list_store_set(contactList, &iter,
+                           0, auxiliarUser->id,
                            1, auxiliarUser->nome,
                            2, auxiliarUser->telefone,
                            3, auxiliarUser->email,
@@ -108,6 +144,7 @@ void startApplication(GtkApplication *app, gpointer user_data)
     // Getting widgets from view
     builder          = gtk_builder_new_from_file("include/contatos.ui");
     mainWindow       = GTK_WINDOW(gtk_builder_get_object(builder, "mainWindow"));
+    treeView         = GTK_TREE_VIEW(gtk_builder_get_object(builder, "treeView"));
     viewStack        = GTK_STACK(gtk_builder_get_object(builder, "viewStack"));
     contactList      = GTK_LIST_STORE(gtk_builder_get_object(builder, "contactList"));
     msgBox           = GTK_MESSAGE_DIALOG(gtk_builder_get_object(builder, "msgBox"));
@@ -117,11 +154,13 @@ void startApplication(GtkApplication *app, gpointer user_data)
 
     gtk_builder_add_callback_symbols(
         builder,
-        "on_btnSearch_clicked",       G_CALLBACK(on_btnSearch_clicked),
-        "on_btnGoRegister_clicked",       G_CALLBACK(on_btnGoRegister_clicked),
-        "on_btnReloadList_clicked",    G_CALLBACK(on_btnReloadList_clicked),
-        "on_btnGoBack_clicked", G_CALLBACK(on_btnGoBack_clicked),
-        "on_btnAddRegister_clicked",        G_CALLBACK(on_btnAddRegister_clicked),
+        "on_btnSearch_clicked",      G_CALLBACK(on_btnSearch_clicked),
+        "on_inpSearch_changed",      G_CALLBACK(on_inpSearch_changed),
+        "on_btnGoRegister_clicked",  G_CALLBACK(on_btnGoRegister_clicked),
+        "on_btnRemove_clicked",      G_CALLBACK(on_btnRemove_clicked),
+        "on_btnReloadList_clicked",  G_CALLBACK(on_btnReloadList_clicked),
+        "on_btnGoBack_clicked",      G_CALLBACK(on_btnGoBack_clicked),
+        "on_btnAddRegister_clicked", G_CALLBACK(on_btnAddRegister_clicked),
         NULL
     );
     gtk_builder_connect_signals(builder, NULL);
