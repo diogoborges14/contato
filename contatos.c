@@ -95,6 +95,8 @@ void on_btnAddRegister_clicked()
 void on_btnGoBack_clicked()
 {
     gtk_stack_set_visible_child_name(viewStack, "view_initial"); // Set "view_initial" as visible
+
+    on_btnReloadList_clicked();
 }
 
 
