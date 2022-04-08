@@ -27,6 +27,17 @@ int id = 0;
 USER *headUser; // Where my list start
 USER *auxiliarUser;
 
+void showMsgBox(char text[100], char secondary_text[100], char icon_name[100])
+{
+    g_object_set(msgBox, "text", text, NULL);
+    g_object_set(msgBox, "secondary_text", secondary_text, NULL);
+    g_object_set(msgBox, "icon_name", icon_name, NULL);
+
+    gtk_widget_show(GTK_WIDGET(msgBox));
+    gtk_dialog_run(GTK_DIALOG(msgBox));
+    gtk_widget_hide(GTK_WIDGET(msgBox));
+}
+
 void on_btnSearch_clicked(){}
 
 void on_btnGoRegister_clicked(){
@@ -35,7 +46,8 @@ void on_btnGoRegister_clicked(){
 
 void on_btnReloadList_clicked(){}
 
-void on_btnAddRegister_clicked(){
+void on_btnAddRegister_clicked()
+{
     char txt[50] = "\0";
     const char *nome     = gtk_entry_get_text(inpName);
     const char *telefone = gtk_entry_get_text(inpPhoneNumber);
@@ -62,7 +74,8 @@ void on_btnAddRegister_clicked(){
     }
 }
 
-void on_btnGoBack_clicked(){
+void on_btnGoBack_clicked()
+{
     gtk_stack_set_visible_child_name(viewStack, "view_initial"); // Set "view_initial" as visible
 }
 
