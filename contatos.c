@@ -44,7 +44,25 @@ void on_btnGoRegister_clicked(){
     gtk_stack_set_visible_child_name(viewStack, "view_register"); // Set "view_register" as visible
 }
 
-void on_btnReloadList_clicked(){}
+void on_btnReloadList_clicked()
+{
+    auxiliarUser->next = NULL; // initialize var
+    auxiliarUser = headUser; // Get where list start
+
+    GtkTreeIter iter;
+    gtk_list_store_clear(contactList);
+
+    while(auxiliarUser->next != NULL){
+        gtk_list_store_append(contactList, &iter);
+        gtk_list_store_set(contactList, &iter,
+                           1, auxiliarUser->nome,
+                           2, auxiliarUser->telefone,
+                           3, auxiliarUser->email,
+                           -1);
+
+        auxiliarUser = auxiliarUser->next;
+    }
+}
 
 void on_btnAddRegister_clicked()
 {
