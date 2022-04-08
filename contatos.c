@@ -33,7 +33,9 @@ void on_btnReloadList_clicked(){}
 
 void on_btnAddRegister_clicked(){}
 
-void on_btnGoBack_clicked(){}
+void on_btnGoBack_clicked(){
+    gtk_stack_set_visible_child_name(viewStack, "view_initial"); // Set "view_initial" as visible
+}
 
 
 void startApplication(GtkApplication *app, gpointer user_data)
