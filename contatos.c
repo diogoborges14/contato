@@ -23,6 +23,10 @@ GtkEntry         *inpName;
 GtkEntry         *inpPhoneNumber;
 GtkEntry         *inpEmail;
 
+int id = 0;
+USER *headUser; // Where my list start
+USER *auxiliarUser;
+
 void on_btnSearch_clicked(){}
 
 void on_btnGoRegister_clicked(){
@@ -31,7 +35,32 @@ void on_btnGoRegister_clicked(){
 
 void on_btnReloadList_clicked(){}
 
-void on_btnAddRegister_clicked(){}
+void on_btnAddRegister_clicked(){
+    char txt[50] = "\0";
+    const char *nome     = gtk_entry_get_text(inpName);
+    const char *telefone = gtk_entry_get_text(inpPhoneNumber);
+    const char *email    = gtk_entry_get_text(inpEmail);
+
+    if(g_str_equal(nome, "")){
+        showMsgBox("Atenção!", "Nome é obrigatório", "dialog-error");
+    }else if(g_str_equal(email, "")){
+        showMsgBox("Atenção!", "Email é obrigatório", "dialog-error");
+    }else{
+        /* save the user */
+        id++;
+        auxiliarUser->id = id;
+        g_strlcpy(auxiliarUser->nome,     nome,    100);
+        g_strlcpy(auxiliarUser->telefone, telefone, 15);
+        g_strlcpy(auxiliarUser->email,    email,   100);
+
+        g_snprintf(txt, 50, "Usuário %s cadastrado com sucesso.", nome);
+        showMsgBox("Aviso", txt, "dialog-emblem-default");
+
+        /* alloc space for next user */
+        auxiliarUser->next = (USER*)malloc(sizeof(USER));
+        auxiliarUser = auxiliarUser->next; // auxiliarUser become the newlest allocated new_next user
+    }
+}
 
 void on_btnGoBack_clicked(){
     gtk_stack_set_visible_child_name(viewStack, "view_initial"); // Set "view_initial" as visible
@@ -40,6 +69,8 @@ void on_btnGoBack_clicked(){
 
 void startApplication(GtkApplication *app, gpointer user_data)
 {
+    headUser = (USER*)malloc(sizeof(USER));
+    auxiliarUser = headUser;
 
     // Getting widgets from view
     builder          = gtk_builder_new_from_file("include/contatos.ui");
