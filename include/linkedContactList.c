@@ -46,7 +46,48 @@ int contact_list_is_empty(CONTACT_LIST* list){
 }
 
 // add a new contact to list
-int contact_list_add(CONTACT_LIST* list, PERSON person);
+int contact_list_add(CONTACT_LIST* list, PERSON person){
+    if(list == NULL) return 0; // list does not exist
+
+    NODE *personNode = (NODE*) malloc(sizeof(NODE));
+    if(personNode == NULL) return 0;
+
+    person.id = list->lastId + 1;
+    personNode->person = person;
+    personNode->next   = NULL;
+
+    if(contact_list_is_empty(list)){ // first node to add
+        list->start = personNode;
+        list->end = personNode;
+    }else{
+        // search for where to add the person
+        NODE *previousNode, *auxNode = list->start;
+        while(
+            (auxNode != NULL) &&
+            (strcasecmp(auxNode->person.name, person.name) < 0) // compare names to know where to put int alphabetical order 
+        ){
+            previousNode = auxNode;
+            auxNode = auxNode->next;
+        }
+
+        // Check search results
+        if(auxNode == list->start){ // we are at the start of the list?
+            list->start = personNode; // personNode
+            personNode->next = auxNode; // personNode -> auxNode → nextNode ...
+        }else{
+            previousNode->next = personNode; // ... previousNode → personNode
+            personNode->next = auxNode; // ... previousNode → personNode → auxNode ...
+
+            if(auxNode == NULL){ // wa are at the end of the list?
+                list->end = personNode;
+            }
+        }
+    }
+    list->quantity++;
+    list->lastId++;
+
+    return 1; // 1 person successfully added
+}
 
 // remove a contact from the list
 int contact_list_remove(CONTACT_LIST* list, int id);
