@@ -16,13 +16,34 @@
 #define TRUE (1)
 
 // Create a CONTACT_LIST and load from a file
-CONTACT_LIST* contact_list_new_from_file();
+CONTACT_LIST* contact_list_new_from_file(){
+    CONTACT_LIST* list = (CONTACT_LIST*) malloc(sizeof(CONTACT_LIST));
+    if(list != NULL){ // was successfully allocated?
+        list->start = NULL;
+        list->end = NULL;
+        list->quantity = 0;
+        list->lastId = 0;
+    }
+    return list;
+}
 
 // get list size
-int contact_list_get_length(CONTACT_LIST* list);
+int contact_list_get_length(CONTACT_LIST* list){
+    if(list == NULL) // does the list not exist?
+        return 0;
+    else
+        return list->quantity;
+}
 
 // check if list is empty
-int contact_list_is_empty(CONTACT_LIST* list);
+int contact_list_is_empty(CONTACT_LIST* list){
+    if(list == NULL) // does the list not exist?
+        return TRUE;
+    else if(list->quantity == 0)
+        return TRUE;
+    else
+        return FALSE; // there is at least one node
+}
 
 // add a new contact to list
 int contact_list_add(CONTACT_LIST* list, PERSON person);
