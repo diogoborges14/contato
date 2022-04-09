@@ -90,7 +90,47 @@ int contact_list_add(CONTACT_LIST* list, PERSON person){
 }
 
 // remove a contact from the list
-int contact_list_remove(CONTACT_LIST* list, int id);
+int contact_list_remove(CONTACT_LIST* list, int id){
+    if(list == NULL)
+        return FALSE; // list does not exist
+    if(contact_list_is_empty(list))
+        return FALSE;
+
+    // search for where is the person
+    NODE *previousNode, *auxNode = list->start;
+    while(
+        (auxNode->next != NULL) &&
+        (auxNode->person.id != id)
+    ){
+        previousNode = auxNode;
+        auxNode = auxNode->next;
+    }
+
+    // Check search results
+    if(auxNode->person.id != id)
+        return 0; // not found
+
+    // If found
+    if(contact_list_get_length(list) == 1){ // remove the only element
+        list->start = NULL;
+        list->end = NULL;
+    }else{
+        if(auxNode == list->start){ // we are at the start of the list?
+            list->start = auxNode->next;
+        }
+        else if(auxNode == list->end){ // wa are at the end of the list? ... previousNode → auxNode → NULL
+            previousNode->next = auxNode->next; // ... previousNode → NULL
+            list->end = previousNode;
+        }
+        else{ // wa are at the middle of the list? ... previousNode → auxNode → nextNode ...
+            previousNode->next = auxNode->next; // ... previousNode → nextNode ...
+        }
+    }
+    free(auxNode);
+    list->quantity--;
+
+    return 1; // 1 person successfully removed
+}
 
 // get a person from the list by id
 PERSON* contact_list_get_person(CONTACT_LIST* list, int id);
