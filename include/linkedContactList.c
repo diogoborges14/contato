@@ -152,7 +152,22 @@ PERSON* contact_list_get_person(CONTACT_LIST* list, int id){
 }
 
 // get a person from the list by position
-PERSON* contact_list_get_person_by_position(CONTACT_LIST* list, int position);
+PERSON* contact_list_get_person_by_position(CONTACT_LIST* list, int position){
+
+    // search for where is the person
+    NODE *auxNode = list->start;
+    int i=1;
+    for(i=1; (auxNode != NULL) && (i < position); i++){
+        auxNode = auxNode->next;
+    }
+
+    if((auxNode != NULL) && i == position){
+        PERSON *person = &(auxNode->person);
+        return person;
+    }else{
+        return NULL;
+    }
+}
 
 // save list and free memory
 void contact_list_save_and_free(CONTACT_LIST* list);
