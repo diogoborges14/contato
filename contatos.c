@@ -10,23 +10,24 @@
 */
 
 #include <gtk/gtk.h>
-#include "include/dynamicList.h"
+#include "include/linkedContactList.h"
 #include <stdlib.h>
 
-/*****   Widgets   *****/
-GtkBuilder       *builder;
-GtkWindow        *mainWindow;
-GtkStack         *viewStack;
-GtkTreeView      *treeView;
-GtkListStore     *contactList;
-GtkMessageDialog *msgBox;
-GtkEntry         *inpName;
-GtkEntry         *inpPhoneNumber;
-GtkEntry         *inpEmail;
+CONTACT_LIST* contactListDB;
 
-int id = 0;
-USER *headUser; // Where my list start
-USER *auxiliarUser;
+/*****   Widgets   *****/
+GtkBuilder         *builder;
+GtkWindow          *mainWindow;
+GtkStack           *viewStack;
+GtkTreeView        *treeView;
+GtkTreeModelFilter *filteredList;
+GtkListStore       *contactsModel;
+GtkMessageDialog   *msgBox;
+GtkSearchEntry     *inpSearch;
+GtkEntry           *inpName;
+GtkEntry           *inpPhoneNumber;
+GtkEntry           *inpEmail;
+
 
 void showMsgBox(char text[100], char secondary_text[100], char icon_name[100])
 {
@@ -39,14 +40,32 @@ void showMsgBox(char text[100], char secondary_text[100], char icon_name[100])
     gtk_widget_hide(GTK_WIDGET(msgBox));
 }
 
-void on_inpSearch_changed(GtkSearchEntry *inpSearch, gpointer data)
+// Decide if a row should or should not be visible
+gboolean shouldBeVisible(GtkTreeModel *model, GtkTreeIter  *iter, gpointer data)
 {
-    g_print("Input changed\n");
+    gboolean visible = FALSE;
+    char *nameStr;
+    char *searchTerm = (char *)gtk_entry_get_text(GTK_ENTRY(inpSearch));
+
+    gtk_tree_model_get(model, iter,
+                       1, &nameStr, // from column 1 get data and put on nameStr
+                       -1);
+
+    if( (strlen(searchTerm) == 0) ||
+        (nameStr && strncasecmp(nameStr, searchTerm, strlen(searchTerm)) == 0)
+    ){
+        visible = TRUE;
+    }
+
+    g_free(nameStr);
+
+    return visible;
 }
 
-void on_btnSearch_clicked()
+void on_inpSearch_changed()
 {
-    g_print("btnSearch pressed\n");
+    // Filter showing results according to the shouldBeVisible() function
+    gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(filteredList));
 }
 
 void on_btnGoRegister_clicked()
@@ -65,74 +84,58 @@ void on_btnRemove_clicked()
 
     if(isValid){
         gtk_tree_model_get(model, &iter,
-                           0, &selectedId, // get from colum 0
+                           0, &selectedId, // get from column 0
                            -1);
-        USER *aux = headUser;
-        USER *prev = headUser;
-        while( (aux->next != NULL) && (aux->id != selectedId) ){ // Search on linked list
-            prev = aux;
-            aux = aux->next;
-        }
-        if(aux->id == selectedId) // Verify searh results
-            prev->next = aux->next;
-        if(aux != NULL)
-            free(aux);
+        contact_list_remove(contactListDB, selectedId); // Remove from storage
 
-        gtk_list_store_remove(contactList, &iter); // Remove from view
+        gtk_list_store_remove(contactsModel, &iter); // Remove from view
     }
 }
 
 void on_btnReloadList_clicked()
 {
-    auxiliarUser->next = NULL; // initialize var
-    auxiliarUser = headUser; // Get where list start
-
+    PERSON *tmpPerson;
     GtkTreeIter iter;
-    gtk_list_store_clear(contactList);
+    gtk_list_store_clear(contactsModel);
 
     // Populate list_store with data from dynamic list
-    while(auxiliarUser->next != NULL){
-        gtk_list_store_append(contactList, &iter);
-        gtk_list_store_set(contactList, &iter,
-                           0, auxiliarUser->id,
-                           1, auxiliarUser->nome,
-                           2, auxiliarUser->telefone,
-                           3, auxiliarUser->email,
-                           -1);
+    for(int i=1; i <= contact_list_get_length(contactListDB); i++){
+        tmpPerson = contact_list_get_person_by_position(contactListDB, i);
 
-        auxiliarUser = auxiliarUser->next;
+        // Copy to TreeView model
+        //if(tmpPerson){
+            gtk_list_store_append(contactsModel, &iter);
+            gtk_list_store_set(contactsModel, &iter,
+                            0, tmpPerson->id,
+                            1, tmpPerson->name,
+                            2, tmpPerson->phone,
+                            3, tmpPerson->email,
+                            -1);
+        //}
     }
-
-    // Sort list in ascending order by column 1 (name)
-    GtkTreeSortable *sortableDataStore = GTK_TREE_SORTABLE(contactList);
-    gtk_tree_sortable_set_sort_column_id(sortableDataStore, 1, GTK_SORT_ASCENDING);
 }
 
 void on_btnAddRegister_clicked()
 {
     char txt[50] = "\0";
-    const char *nome     = gtk_entry_get_text(inpName);
-    const char *telefone = gtk_entry_get_text(inpPhoneNumber);
+    PERSON person;
+    const char *name     = gtk_entry_get_text(inpName);
+    const char *phoneNum = gtk_entry_get_text(inpPhoneNumber);
     const char *email    = gtk_entry_get_text(inpEmail);
 
-    if(g_str_equal(nome, "")){
+    if(g_str_equal(name, "")){
         showMsgBox("Atenção!", "Nome é obrigatório", "dialog-error");
     }else if(g_str_equal(email, "")){
         showMsgBox("Atenção!", "Email é obrigatório", "dialog-error");
     }else{
-        /* save the user */
-        id++;
-        auxiliarUser->id = id;
-        g_strlcpy(auxiliarUser->nome,     nome,    100);
-        g_strlcpy(auxiliarUser->telefone, telefone, 15);
-        g_strlcpy(auxiliarUser->email,    email,   100);
+        /* save the person */
+        g_strlcpy(person.name,     name,    100);
+        g_strlcpy(person.phone,    phoneNum, 15);
+        g_strlcpy(person.email,    email,   100);
+        contact_list_add(contactListDB, person);
 
-        g_snprintf(txt, 50, "Usuário %s cadastrado com sucesso.", nome);
+        g_snprintf(txt, 50, "Contato %s salvo com sucesso.", name);
         showMsgBox("Aviso", txt, "dialog-emblem-default");
-
-        /* alloc space for next user */
-        auxiliarUser->next = (USER*)malloc(sizeof(USER));
-        auxiliarUser = auxiliarUser->next; // auxiliarUser become the newlest allocated new_next user
     }
 }
 
@@ -143,18 +146,17 @@ void on_btnGoBack_clicked()
     on_btnReloadList_clicked();
 }
 
-
 void startApplication(GtkApplication *app, gpointer user_data)
 {
-    headUser = (USER*)malloc(sizeof(USER));
-    auxiliarUser = headUser;
+    contactListDB = contact_list_new_from_file();
 
     // Getting widgets from view
     builder          = gtk_builder_new_from_file("include/contatos.ui");
     mainWindow       = GTK_WINDOW(gtk_builder_get_object(builder, "mainWindow"));
     treeView         = GTK_TREE_VIEW(gtk_builder_get_object(builder, "treeView"));
+    inpSearch        = GTK_SEARCH_ENTRY(gtk_builder_get_object(builder, "inpSearch"));
     viewStack        = GTK_STACK(gtk_builder_get_object(builder, "viewStack"));
-    contactList      = GTK_LIST_STORE(gtk_builder_get_object(builder, "contactList"));
+    contactsModel    = GTK_LIST_STORE(gtk_builder_get_object(builder, "contactList"));
     msgBox           = GTK_MESSAGE_DIALOG(gtk_builder_get_object(builder, "msgBox"));
     inpName          = GTK_ENTRY(gtk_builder_get_object(builder, "inpName"));
     inpPhoneNumber   = GTK_ENTRY(gtk_builder_get_object(builder, "inpPhoneNumber"));
@@ -162,7 +164,6 @@ void startApplication(GtkApplication *app, gpointer user_data)
 
     gtk_builder_add_callback_symbols(
         builder,
-        "on_btnSearch_clicked",      G_CALLBACK(on_btnSearch_clicked),
         "on_inpSearch_changed",      G_CALLBACK(on_inpSearch_changed),
         "on_btnGoRegister_clicked",  G_CALLBACK(on_btnGoRegister_clicked),
         "on_btnRemove_clicked",      G_CALLBACK(on_btnRemove_clicked),
@@ -172,6 +173,11 @@ void startApplication(GtkApplication *app, gpointer user_data)
         NULL
     );
     gtk_builder_connect_signals(builder, NULL);
+
+    // Set a filter to the treeView
+    GtkTreeModel *actualModel = gtk_tree_view_get_model(treeView);
+    filteredList = GTK_TREE_MODEL_FILTER(gtk_tree_model_filter_new(actualModel, NULL));
+    gtk_tree_model_filter_set_visible_func(filteredList, shouldBeVisible, NULL, NULL);
 
     /* Set the app to show on Window. The application will be kept alive for at least as long as it has
       any windows associated with it (see g_application_hold() for a way to keep it alive without windows). */
