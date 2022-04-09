@@ -170,4 +170,15 @@ PERSON* contact_list_get_person_by_position(CONTACT_LIST* list, int position){
 }
 
 // save list and free memory
-void contact_list_save_and_free(CONTACT_LIST* list);
+void contact_list_save_and_free(CONTACT_LIST* list){
+    if(list != NULL){
+        NODE *auxNode;
+
+        while(list->start != NULL){
+            auxNode = (list->start);
+            (list->start) = (list->start)->next;
+            free(auxNode);
+        }
+        free(list);
+    }
+}
