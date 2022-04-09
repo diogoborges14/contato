@@ -14,15 +14,17 @@
 #include <stdlib.h>
 
 /*****   Widgets   *****/
-GtkBuilder       *builder;
-GtkWindow        *mainWindow;
-GtkStack         *viewStack;
-GtkTreeView      *treeView;
-GtkListStore     *contactList;
-GtkMessageDialog *msgBox;
-GtkEntry         *inpName;
-GtkEntry         *inpPhoneNumber;
-GtkEntry         *inpEmail;
+GtkBuilder         *builder;
+GtkWindow          *mainWindow;
+GtkStack           *viewStack;
+GtkTreeView        *treeView;
+GtkTreeModelFilter *filteredList;
+GtkListStore       *contactList;
+GtkMessageDialog   *msgBox;
+GtkSearchEntry     *inpSearch;
+GtkEntry           *inpName;
+GtkEntry           *inpPhoneNumber;
+GtkEntry           *inpEmail;
 
 int id = 0;
 USER *headUser; // Where my list start
@@ -39,14 +41,32 @@ void showMsgBox(char text[100], char secondary_text[100], char icon_name[100])
     gtk_widget_hide(GTK_WIDGET(msgBox));
 }
 
-void on_inpSearch_changed(GtkSearchEntry *inpSearch, gpointer data)
+// Decide if a row should or should not be visible
+gboolean shouldBeVisible(GtkTreeModel *model, GtkTreeIter  *iter, gpointer data)
 {
-    g_print("Input changed\n");
+    gboolean visible = FALSE;
+    char *nameStr;
+    char *searchTerm = (char *)gtk_entry_get_text(GTK_ENTRY(inpSearch));
+
+    gtk_tree_model_get(model, iter,
+                       1, &nameStr, // from column 1 get data and put on nameStr
+                       -1);
+
+    if( (strlen(searchTerm) == 0) ||
+        (nameStr && strncasecmp(nameStr, searchTerm, strlen(searchTerm)) == 0)
+    ){
+        visible = TRUE;
+    }
+
+    g_free(nameStr);
+
+    return visible;
 }
 
-void on_btnSearch_clicked()
+void on_inpSearch_changed()
 {
-    g_print("btnSearch pressed\n");
+    // Filter showing results according to the shouldBeVisible() function
+    gtk_tree_model_filter_refilter(GTK_TREE_MODEL_FILTER(filteredList));
 }
 
 void on_btnGoRegister_clicked()
@@ -65,7 +85,7 @@ void on_btnRemove_clicked()
 
     if(isValid){
         gtk_tree_model_get(model, &iter,
-                           0, &selectedId, // get from colum 0
+                           0, &selectedId, // get from column 0
                            -1);
         USER *aux = headUser;
         USER *prev = headUser;
@@ -73,7 +93,7 @@ void on_btnRemove_clicked()
             prev = aux;
             aux = aux->next;
         }
-        if(aux->id == selectedId) // Verify searh results
+        if(aux->id == selectedId) // Verify search results
             prev->next = aux->next;
         if(aux != NULL)
             free(aux);
@@ -143,7 +163,6 @@ void on_btnGoBack_clicked()
     on_btnReloadList_clicked();
 }
 
-
 void startApplication(GtkApplication *app, gpointer user_data)
 {
     headUser = (USER*)malloc(sizeof(USER));
@@ -153,6 +172,7 @@ void startApplication(GtkApplication *app, gpointer user_data)
     builder          = gtk_builder_new_from_file("include/contatos.ui");
     mainWindow       = GTK_WINDOW(gtk_builder_get_object(builder, "mainWindow"));
     treeView         = GTK_TREE_VIEW(gtk_builder_get_object(builder, "treeView"));
+    inpSearch        = GTK_SEARCH_ENTRY(gtk_builder_get_object(builder, "inpSearch"));
     viewStack        = GTK_STACK(gtk_builder_get_object(builder, "viewStack"));
     contactList      = GTK_LIST_STORE(gtk_builder_get_object(builder, "contactList"));
     msgBox           = GTK_MESSAGE_DIALOG(gtk_builder_get_object(builder, "msgBox"));
@@ -162,7 +182,6 @@ void startApplication(GtkApplication *app, gpointer user_data)
 
     gtk_builder_add_callback_symbols(
         builder,
-        "on_btnSearch_clicked",      G_CALLBACK(on_btnSearch_clicked),
         "on_inpSearch_changed",      G_CALLBACK(on_inpSearch_changed),
         "on_btnGoRegister_clicked",  G_CALLBACK(on_btnGoRegister_clicked),
         "on_btnRemove_clicked",      G_CALLBACK(on_btnRemove_clicked),
@@ -172,6 +191,11 @@ void startApplication(GtkApplication *app, gpointer user_data)
         NULL
     );
     gtk_builder_connect_signals(builder, NULL);
+
+    // Set a filter to the treeView
+    GtkTreeModel *actualModel = gtk_tree_view_get_model(treeView);
+    filteredList = GTK_TREE_MODEL_FILTER(gtk_tree_model_filter_new(actualModel, NULL));
+    gtk_tree_model_filter_set_visible_func(filteredList, shouldBeVisible, NULL, NULL);
 
     /* Set the app to show on Window. The application will be kept alive for at least as long as it has
       any windows associated with it (see g_application_hold() for a way to keep it alive without windows). */
