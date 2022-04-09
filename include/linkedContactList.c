@@ -133,7 +133,23 @@ int contact_list_remove(CONTACT_LIST* list, int id){
 }
 
 // get a person from the list by id
-PERSON* contact_list_get_person(CONTACT_LIST* list, int id);
+PERSON* contact_list_get_person(CONTACT_LIST* list, int id){
+    if(contact_list_is_empty(list) || id <= 0) return 0;
+
+    // search for where is the person
+    NODE *auxNode = list->start;
+    while(auxNode->next != NULL && auxNode->person.id != id){
+        auxNode = auxNode->next;
+    }
+
+
+    // Check search results
+    PERSON *person = NULL;
+    if(auxNode->person.id == id){ // found?
+        *person = auxNode->person;
+    }
+    return person;
+}
 
 // get a person from the list by position
 PERSON* contact_list_get_person_by_position(CONTACT_LIST* list, int position);
