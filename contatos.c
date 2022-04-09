@@ -39,15 +39,18 @@ void showMsgBox(char text[100], char secondary_text[100], char icon_name[100])
     gtk_widget_hide(GTK_WIDGET(msgBox));
 }
 
-void on_inpSearch_changed(GtkSearchEntry *inpSearch, gpointer data){
+void on_inpSearch_changed(GtkSearchEntry *inpSearch, gpointer data)
+{
     g_print("Input changed\n");
 }
 
-void on_btnSearch_clicked(){
+void on_btnSearch_clicked()
+{
     g_print("btnSearch pressed\n");
 }
 
-void on_btnGoRegister_clicked(){
+void on_btnGoRegister_clicked()
+{
     gtk_stack_set_visible_child_name(viewStack, "view_register"); // Set "view_register" as visible
 }
 
@@ -62,15 +65,15 @@ void on_btnRemove_clicked()
 
     if(isValid){
         gtk_tree_model_get(model, &iter,
-                           0, &selectedId, 
+                           0, &selectedId, // get from colum 0
                            -1);
         USER *aux = headUser;
         USER *prev = headUser;
-        while( (aux->next != NULL) && (aux->id != selectedId) ){
+        while( (aux->next != NULL) && (aux->id != selectedId) ){ // Search on linked list
             prev = aux;
             aux = aux->next;
         }
-        if(aux->id == selectedId)
+        if(aux->id == selectedId) // Verify searh results
             prev->next = aux->next;
         if(aux != NULL)
             free(aux);
@@ -87,6 +90,7 @@ void on_btnReloadList_clicked()
     GtkTreeIter iter;
     gtk_list_store_clear(contactList);
 
+    // Populate list_store with data from dynamic list
     while(auxiliarUser->next != NULL){
         gtk_list_store_append(contactList, &iter);
         gtk_list_store_set(contactList, &iter,
@@ -98,6 +102,10 @@ void on_btnReloadList_clicked()
 
         auxiliarUser = auxiliarUser->next;
     }
+
+    // Sort list in ascending order by column 1 (name)
+    GtkTreeSortable *sortableDataStore = GTK_TREE_SORTABLE(contactList);
+    gtk_tree_sortable_set_sort_column_id(sortableDataStore, 1, GTK_SORT_ASCENDING);
 }
 
 void on_btnAddRegister_clicked()
