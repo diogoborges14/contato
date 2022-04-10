@@ -148,7 +148,7 @@ void on_btnGoBack_clicked()
 
 void startApplication(GtkApplication *app, gpointer user_data)
 {
-    contactListDB = contact_list_new_from_file();
+    contactListDB = contact_list_new_from_file("contatos.ini");
 
     // Getting widgets from view
     builder          = gtk_builder_new_from_file("include/contatos.ui");

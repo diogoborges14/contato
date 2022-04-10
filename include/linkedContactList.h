@@ -27,8 +27,8 @@ struct _listNode{
 }typedef NODE;
 
 struct _descriptor{
-    int             lastId;
-    int             quantity;
+    int              lastId;
+    int              quantity;
     struct _listNode *start;
     struct _listNode *end;
 }typedef CONTACT_LIST; // It's a special node containing the linked list information
@@ -36,7 +36,7 @@ struct _descriptor{
 /*************** functions **************/
 
 // Create a CONTACT_LIST and load from a file
-CONTACT_LIST* contact_list_new_from_file();
+CONTACT_LIST* contact_list_new_from_file(const char *fileName);
 
 // get list size
 int contact_list_get_length(CONTACT_LIST* list);
@@ -56,7 +56,7 @@ PERSON* contact_list_get_person(CONTACT_LIST* list, int id);
 // get a person from the list by position
 PERSON* contact_list_get_person_by_position(CONTACT_LIST* list, int position);
 
-// save list and free memory
-void contact_list_save_and_free(CONTACT_LIST* list);
+// free list from memory
+void contact_list_free(CONTACT_LIST* list);
 
 #endif

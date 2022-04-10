@@ -12,18 +12,48 @@
 #include "linkedContactList.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #define FALSE (0)
 #define TRUE (1)
 
 // Create a CONTACT_LIST and load from a file
-CONTACT_LIST* contact_list_new_from_file(){
-    CONTACT_LIST* list = (CONTACT_LIST*) malloc(sizeof(CONTACT_LIST));
+CONTACT_LIST* contact_list_new_from_file(const char *fileName){
+    CONTACT_LIST *list = (CONTACT_LIST*) malloc(sizeof(CONTACT_LIST));
     if(list != NULL){ // was successfully allocated?
         list->start = NULL;
         list->end = NULL;
         list->quantity = 0;
         list->lastId = 0;
     }
+
+    FILE   *file = fopen(fileName, "r"); // open file in read mode
+    PERSON tmpPerson;
+    // try to read data saved on the file
+    if(file != NULL && list != NULL){
+        short returnedCode;
+        fscanf(file, "[CONTACTS]\n");
+
+        while( !feof(file) ){ // while do not find end-of-file
+            returnedCode = fscanf(
+                file,
+                "name=%[^\n]\n"
+                "phone=%[^\n]\n"
+                "email=%[^\n]\n"
+                "\n",
+                tmpPerson.name,
+                tmpPerson.phone,
+                tmpPerson.email
+            );
+
+            if(returnedCode < 3){ // prevent infity loop if do not found 3 arguments on fscanf
+                break;
+            }
+
+            contact_list_add(list, tmpPerson); // save person on memory
+        }
+        fclose(file);
+    }
+
     return list;
 }
 
@@ -169,8 +199,8 @@ PERSON* contact_list_get_person_by_position(CONTACT_LIST* list, int position){
     }
 }
 
-// save list and free memory
-void contact_list_save_and_free(CONTACT_LIST* list){
+// free list from memory
+void contact_list_free(CONTACT_LIST* list){
     if(list != NULL){
         NODE *auxNode;
 
