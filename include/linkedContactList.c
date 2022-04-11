@@ -204,11 +204,12 @@ PERSON* contact_list_get_person(CONTACT_LIST* list, int id){
     }
 
     // Check search results
-    PERSON *person = NULL;
     if(auxNode->person.id == id){ // found?
-        *person = auxNode->person;
+        PERSON *person = &(auxNode->person);
+        return person;
+    }else{
+        return NULL;
     }
-    return person;
 }
 
 // get a person from the list by position
