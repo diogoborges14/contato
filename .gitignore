@@ -7,6 +7,7 @@ contatos
 *.o
 *.exe
 *.data
+*.ini
 
 # Debug stuff
 *.dSYM

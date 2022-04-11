@@ -38,6 +38,9 @@ struct _descriptor{
 // Create a CONTACT_LIST and load from a file
 CONTACT_LIST* contact_list_new_from_file(const char *fileName);
 
+// save changes to file
+int contact_list_write_changes_to_file(CONTACT_LIST* list, const char *fileName);
+
 // get list size
 int contact_list_get_length(CONTACT_LIST* list);
 
