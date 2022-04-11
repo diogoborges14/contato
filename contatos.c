@@ -12,6 +12,7 @@
 #include <gtk/gtk.h>
 #include "include/linkedContactList.h"
 #include <stdlib.h>
+#define FILE_NAME "contatos.ini"
 
 CONTACT_LIST* contactListDB;
 
@@ -92,7 +93,7 @@ void on_btnRemove_clicked()
     }
 }
 
-void on_btnReloadList_clicked()
+void reloadListView()
 {
     PERSON *tmpPerson;
     GtkTreeIter iter;
@@ -103,15 +104,13 @@ void on_btnReloadList_clicked()
         tmpPerson = contact_list_get_person_by_position(contactListDB, i);
 
         // Copy to TreeView model
-        //if(tmpPerson){
-            gtk_list_store_append(contactsModel, &iter);
-            gtk_list_store_set(contactsModel, &iter,
-                            0, tmpPerson->id,
-                            1, tmpPerson->name,
-                            2, tmpPerson->phone,
-                            3, tmpPerson->email,
-                            -1);
-        //}
+        gtk_list_store_append(contactsModel, &iter);
+        gtk_list_store_set(contactsModel, &iter,
+                           0, tmpPerson->id,
+                           1, tmpPerson->name,
+                           2, tmpPerson->phone,
+                           3, tmpPerson->email,
+                           -1);
     }
 }
 
@@ -142,13 +141,21 @@ void on_btnAddRegister_clicked()
 void on_btnGoBack_clicked()
 {
     gtk_stack_set_visible_child_name(viewStack, "view_initial"); // Set "view_initial" as visible
+    gtk_entry_set_text(inpName, "");
+    gtk_entry_set_text(inpPhoneNumber, "");
+    gtk_entry_set_text(inpEmail, "");
+    contact_list_write_changes_to_file(contactListDB , FILE_NAME);
+    reloadListView();
+}
 
-    on_btnReloadList_clicked();
+void saveOnQuit(){
+    contact_list_write_changes_to_file(contactListDB , FILE_NAME);
+    contact_list_free(contactListDB);
 }
 
 void startApplication(GtkApplication *app, gpointer user_data)
 {
-    contactListDB = contact_list_new_from_file("contatos.ini");
+    contactListDB = contact_list_new_from_file(FILE_NAME);
 
     // Getting widgets from view
     builder          = gtk_builder_new_from_file("include/contatos.ui");
@@ -164,10 +171,11 @@ void startApplication(GtkApplication *app, gpointer user_data)
 
     gtk_builder_add_callback_symbols(
         builder,
+        "on_mainWindow_show",        G_CALLBACK(reloadListView),
+        "on_mainWindow_destroy",     G_CALLBACK(saveOnQuit),
         "on_inpSearch_changed",      G_CALLBACK(on_inpSearch_changed),
         "on_btnGoRegister_clicked",  G_CALLBACK(on_btnGoRegister_clicked),
         "on_btnRemove_clicked",      G_CALLBACK(on_btnRemove_clicked),
-        "on_btnReloadList_clicked",  G_CALLBACK(on_btnReloadList_clicked),
         "on_btnGoBack_clicked",      G_CALLBACK(on_btnGoBack_clicked),
         "on_btnAddRegister_clicked", G_CALLBACK(on_btnAddRegister_clicked),
         NULL

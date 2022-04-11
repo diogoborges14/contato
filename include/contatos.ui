@@ -88,6 +88,8 @@
     <property name="title" translatable="yes">Contatos</property>
     <property name="window_position">center</property>
     <property name="icon_name">avatar-default</property>
+    <signal name="destroy" handler="on_mainWindow_destroy" swapped="no"/>
+    <signal name="show" handler="on_mainWindow_show" swapped="no"/>
     <child>
       <object class="GtkStack" id="viewStack">
         <property name="visible">True</property>
@@ -126,7 +128,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
-                        <property name="margin_start">20</property>
+                        <property name="margin_start">30</property>
                         <property name="image">addIcon</property>
                         <property name="always_show_image">True</property>
                         <signal name="clicked" handler="on_btnGoRegister_clicked" swapped="no"/>
@@ -157,7 +159,7 @@
                         <property name="receives_default">True</property>
                         <property name="image">reloadIcon</property>
                         <property name="always_show_image">True</property>
-                        <signal name="clicked" handler="on_btnReloadList_clicked" swapped="no"/>
+                        <signal name="clicked" handler="reloadListView" swapped="no"/>
                       </object>
                       <packing>
                         <property name="left_attach">3</property>

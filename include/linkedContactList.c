@@ -45,16 +45,47 @@ CONTACT_LIST* contact_list_new_from_file(const char *fileName){
                 tmpPerson.email
             );
 
-            if(returnedCode < 3){ // prevent infity loop if do not found 3 arguments on fscanf
+            if(returnedCode < 3){ // prevent infinity loop if do not found 3 arguments on fscanf
                 break;
             }
 
-            contact_list_add(list, tmpPerson); // save person on memory
+            contact_list_add(list, tmpPerson); // save person in memory
         }
         fclose(file);
     }
 
     return list;
+}
+
+// save changes to file
+int contact_list_write_changes_to_file(CONTACT_LIST* list, const char *fileName){
+    FILE   *file = fopen(fileName, "w"); // open file in write mode
+    if(file == NULL)
+        return -1; // Error, can not open file
+
+
+    // try to write data to the file
+    fprintf(file, "[CONTACTS]\n");
+
+    NODE *auxNode = list->start;
+    for(int i=1; (auxNode != NULL) && (i <= list->quantity); i++){
+        fprintf(
+            file,
+            "name=%s\n"
+            "phone=%s\n"
+            "email=%s",
+            auxNode->person.name,
+            auxNode->person.phone,
+            auxNode->person.email
+        );
+        if(i != list->quantity)
+            fputs("\n\n", file);
+
+        auxNode = auxNode->next;
+    }
+
+    fclose(file);
+    return 1;
 }
 
 // get list size
@@ -172,7 +203,6 @@ PERSON* contact_list_get_person(CONTACT_LIST* list, int id){
         auxNode = auxNode->next;
     }
 
-
     // Check search results
     PERSON *person = NULL;
     if(auxNode->person.id == id){ // found?
@@ -191,6 +221,7 @@ PERSON* contact_list_get_person_by_position(CONTACT_LIST* list, int position){
         auxNode = auxNode->next;
     }
 
+    // Check search results
     if((auxNode != NULL) && i == position){
         PERSON *person = &(auxNode->person);
         return person;
