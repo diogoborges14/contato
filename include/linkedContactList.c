@@ -12,19 +12,80 @@
 #include "linkedContactList.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #define FALSE (0)
 #define TRUE (1)
 
 // Create a CONTACT_LIST and load from a file
-CONTACT_LIST* contact_list_new_from_file(){
-    CONTACT_LIST* list = (CONTACT_LIST*) malloc(sizeof(CONTACT_LIST));
+CONTACT_LIST* contact_list_new_from_file(const char *fileName){
+    CONTACT_LIST *list = (CONTACT_LIST*) malloc(sizeof(CONTACT_LIST));
     if(list != NULL){ // was successfully allocated?
         list->start = NULL;
         list->end = NULL;
         list->quantity = 0;
         list->lastId = 0;
     }
+
+    FILE   *file = fopen(fileName, "r"); // open file in read mode
+    PERSON tmpPerson;
+    // try to read data saved on the file
+    if(file != NULL && list != NULL){
+        short returnedCode;
+        fscanf(file, "[CONTACTS]\n");
+
+        while( !feof(file) ){ // while do not find end-of-file
+            returnedCode = fscanf(
+                file,
+                "name=%[^\n]\n"
+                "phone=%[^\n]\n"
+                "email=%[^\n]\n"
+                "\n",
+                tmpPerson.name,
+                tmpPerson.phone,
+                tmpPerson.email
+            );
+
+            if(returnedCode < 3){ // prevent infinity loop if do not found 3 arguments on fscanf
+                break;
+            }
+
+            contact_list_add(list, tmpPerson); // save person in memory
+        }
+        fclose(file);
+    }
+
     return list;
+}
+
+// save changes to file
+int contact_list_write_changes_to_file(CONTACT_LIST* list, const char *fileName){
+    FILE   *file = fopen(fileName, "w"); // open file in write mode
+    if(file == NULL)
+        return -1; // Error, can not open file
+
+
+    // try to write data to the file
+    fprintf(file, "[CONTACTS]\n");
+
+    NODE *auxNode = list->start;
+    for(int i=1; (auxNode != NULL) && (i <= list->quantity); i++){
+        fprintf(
+            file,
+            "name=%s\n"
+            "phone=%s\n"
+            "email=%s",
+            auxNode->person.name,
+            auxNode->person.phone,
+            auxNode->person.email
+        );
+        if(i != list->quantity)
+            fputs("\n\n", file);
+
+        auxNode = auxNode->next;
+    }
+
+    fclose(file);
+    return 1;
 }
 
 // get list size
@@ -142,13 +203,13 @@ PERSON* contact_list_get_person(CONTACT_LIST* list, int id){
         auxNode = auxNode->next;
     }
 
-
     // Check search results
-    PERSON *person = NULL;
     if(auxNode->person.id == id){ // found?
-        *person = auxNode->person;
+        PERSON *person = &(auxNode->person);
+        return person;
+    }else{
+        return NULL;
     }
-    return person;
 }
 
 // get a person from the list by position
@@ -161,6 +222,7 @@ PERSON* contact_list_get_person_by_position(CONTACT_LIST* list, int position){
         auxNode = auxNode->next;
     }
 
+    // Check search results
     if((auxNode != NULL) && i == position){
         PERSON *person = &(auxNode->person);
         return person;
@@ -169,8 +231,8 @@ PERSON* contact_list_get_person_by_position(CONTACT_LIST* list, int position){
     }
 }
 
-// save list and free memory
-void contact_list_save_and_free(CONTACT_LIST* list){
+// free list from memory
+void contact_list_free(CONTACT_LIST* list){
     if(list != NULL){
         NODE *auxNode;
 

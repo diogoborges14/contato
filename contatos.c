@@ -12,7 +12,9 @@
 #include <gtk/gtk.h>
 #include "include/linkedContactList.h"
 #include <stdlib.h>
+#define FILE_NAME "contatos.ini"
 
+int tmpId;
 CONTACT_LIST* contactListDB;
 
 /*****   Widgets   *****/
@@ -27,6 +29,7 @@ GtkSearchEntry     *inpSearch;
 GtkEntry           *inpName;
 GtkEntry           *inpPhoneNumber;
 GtkEntry           *inpEmail;
+GtkStack           *btnAddUpdateStack;
 
 
 void showMsgBox(char text[100], char secondary_text[100], char icon_name[100])
@@ -71,6 +74,7 @@ void on_inpSearch_changed()
 void on_btnGoRegister_clicked()
 {
     gtk_stack_set_visible_child_name(viewStack, "view_register"); // Set "view_register" as visible
+    gtk_stack_set_visible_child_name(btnAddUpdateStack, "view_btnAddRegister"); // Set "btnAddRegister" as visible
 }
 
 void on_btnRemove_clicked()
@@ -92,7 +96,7 @@ void on_btnRemove_clicked()
     }
 }
 
-void on_btnReloadList_clicked()
+void reloadListView()
 {
     PERSON *tmpPerson;
     GtkTreeIter iter;
@@ -103,15 +107,39 @@ void on_btnReloadList_clicked()
         tmpPerson = contact_list_get_person_by_position(contactListDB, i);
 
         // Copy to TreeView model
-        //if(tmpPerson){
-            gtk_list_store_append(contactsModel, &iter);
-            gtk_list_store_set(contactsModel, &iter,
-                            0, tmpPerson->id,
-                            1, tmpPerson->name,
-                            2, tmpPerson->phone,
-                            3, tmpPerson->email,
-                            -1);
-        //}
+        gtk_list_store_append(contactsModel, &iter);
+        gtk_list_store_set(contactsModel, &iter,
+                           0, tmpPerson->id,
+                           1, tmpPerson->name,
+                           2, tmpPerson->phone,
+                           3, tmpPerson->email,
+                           -1);
+    }
+}
+
+void on_btnGoEdit_clicked()
+{
+    gtk_stack_set_visible_child_name(viewStack, "view_register"); // Set "view_register" as visible
+    gtk_stack_set_visible_child_name(btnAddUpdateStack, "view_btnUpdateRegister"); // Set "btnUpdateRegister" as visible
+
+    int              selectedId = 0;
+    PERSON           *tmpPerson;
+    GtkTreeIter      iter;
+    GtkTreeModel     *model;
+    GtkTreeSelection *selectionObj = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeView));
+
+    int isValid = gtk_tree_selection_get_selected(selectionObj, &model, &iter);
+
+    if(isValid){
+        gtk_tree_model_get(model, &iter,
+                           0, &selectedId, // get data from column 0
+                           -1);
+        tmpPerson = contact_list_get_person(contactListDB, selectedId);
+
+        tmpId = tmpPerson->id;
+        gtk_entry_set_text(inpName, tmpPerson->name);
+        gtk_entry_set_text(inpPhoneNumber, tmpPerson->phone);
+        gtk_entry_set_text(inpEmail, tmpPerson->email);
     }
 }
 
@@ -139,37 +167,55 @@ void on_btnAddRegister_clicked()
     }
 }
 
+void on_btnUpdateRegister_clicked()
+{
+    contact_list_remove(contactListDB, tmpId);
+    on_btnAddRegister_clicked();
+}
+
 void on_btnGoBack_clicked()
 {
     gtk_stack_set_visible_child_name(viewStack, "view_initial"); // Set "view_initial" as visible
+    gtk_entry_set_text(inpName, "");
+    gtk_entry_set_text(inpPhoneNumber, "");
+    gtk_entry_set_text(inpEmail, "");
+    contact_list_write_changes_to_file(contactListDB , FILE_NAME);
+    reloadListView();
+}
 
-    on_btnReloadList_clicked();
+void saveOnQuit(){
+    contact_list_write_changes_to_file(contactListDB , FILE_NAME);
+    contact_list_free(contactListDB);
 }
 
 void startApplication(GtkApplication *app, gpointer user_data)
 {
-    contactListDB = contact_list_new_from_file();
+    contactListDB = contact_list_new_from_file(FILE_NAME);
 
     // Getting widgets from view
-    builder          = gtk_builder_new_from_file("include/contatos.ui");
-    mainWindow       = GTK_WINDOW(gtk_builder_get_object(builder, "mainWindow"));
-    treeView         = GTK_TREE_VIEW(gtk_builder_get_object(builder, "treeView"));
-    inpSearch        = GTK_SEARCH_ENTRY(gtk_builder_get_object(builder, "inpSearch"));
-    viewStack        = GTK_STACK(gtk_builder_get_object(builder, "viewStack"));
-    contactsModel    = GTK_LIST_STORE(gtk_builder_get_object(builder, "contactList"));
-    msgBox           = GTK_MESSAGE_DIALOG(gtk_builder_get_object(builder, "msgBox"));
-    inpName          = GTK_ENTRY(gtk_builder_get_object(builder, "inpName"));
-    inpPhoneNumber   = GTK_ENTRY(gtk_builder_get_object(builder, "inpPhoneNumber"));
-    inpEmail         = GTK_ENTRY(gtk_builder_get_object(builder, "inpEmail"));
+    builder           = gtk_builder_new_from_file("include/contatos.ui");
+    mainWindow        = GTK_WINDOW(gtk_builder_get_object(builder, "mainWindow"));
+    treeView          = GTK_TREE_VIEW(gtk_builder_get_object(builder, "treeView"));
+    inpSearch         = GTK_SEARCH_ENTRY(gtk_builder_get_object(builder, "inpSearch"));
+    viewStack         = GTK_STACK(gtk_builder_get_object(builder, "viewStack"));
+    contactsModel     = GTK_LIST_STORE(gtk_builder_get_object(builder, "contactList"));
+    msgBox            = GTK_MESSAGE_DIALOG(gtk_builder_get_object(builder, "msgBox"));
+    inpName           = GTK_ENTRY(gtk_builder_get_object(builder, "inpName"));
+    inpPhoneNumber    = GTK_ENTRY(gtk_builder_get_object(builder, "inpPhoneNumber"));
+    inpEmail          = GTK_ENTRY(gtk_builder_get_object(builder, "inpEmail"));
+    btnAddUpdateStack = GTK_STACK(gtk_builder_get_object(builder, "btnAddUpdateStack"));
 
     gtk_builder_add_callback_symbols(
         builder,
-        "on_inpSearch_changed",      G_CALLBACK(on_inpSearch_changed),
-        "on_btnGoRegister_clicked",  G_CALLBACK(on_btnGoRegister_clicked),
-        "on_btnRemove_clicked",      G_CALLBACK(on_btnRemove_clicked),
-        "on_btnReloadList_clicked",  G_CALLBACK(on_btnReloadList_clicked),
-        "on_btnGoBack_clicked",      G_CALLBACK(on_btnGoBack_clicked),
-        "on_btnAddRegister_clicked", G_CALLBACK(on_btnAddRegister_clicked),
+        "on_mainWindow_show",           G_CALLBACK(reloadListView),
+        "on_mainWindow_destroy",        G_CALLBACK(saveOnQuit),
+        "on_inpSearch_changed",         G_CALLBACK(on_inpSearch_changed),
+        "on_btnGoRegister_clicked",     G_CALLBACK(on_btnGoRegister_clicked),
+        "on_btnRemove_clicked",         G_CALLBACK(on_btnRemove_clicked),
+        "on_btnGoEdit_clicked",         G_CALLBACK(on_btnGoEdit_clicked),
+        "on_btnGoBack_clicked",         G_CALLBACK(on_btnGoBack_clicked),
+        "on_btnAddRegister_clicked",    G_CALLBACK(on_btnAddRegister_clicked),
+        "on_btnUpdateRegister_clicked", G_CALLBACK(on_btnUpdateRegister_clicked),
         NULL
     );
     gtk_builder_connect_signals(builder, NULL);

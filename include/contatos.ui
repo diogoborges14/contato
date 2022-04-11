@@ -19,6 +19,11 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkImage" id="editIcon">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="icon_name">gtk-edit</property>
+  </object>
   <object class="GtkImage" id="goBackIcon">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -71,11 +76,6 @@
     <property name="can_focus">False</property>
     <property name="icon_name">add</property>
   </object>
-  <object class="GtkImage" id="reloadIcon">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="icon_name">reload</property>
-  </object>
   <object class="GtkImage" id="removeIcon">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -88,6 +88,8 @@
     <property name="title" translatable="yes">Contatos</property>
     <property name="window_position">center</property>
     <property name="icon_name">avatar-default</property>
+    <signal name="destroy" handler="on_mainWindow_destroy" swapped="no"/>
+    <signal name="show" handler="on_mainWindow_show" swapped="no"/>
     <child>
       <object class="GtkStack" id="viewStack">
         <property name="visible">True</property>
@@ -111,6 +113,7 @@
                       <object class="GtkSearchEntry" id="inpSearch">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <property name="primary_icon_name">edit-find-symbolic</property>
                         <property name="primary_icon_activatable">False</property>
                         <property name="primary_icon_sensitive">False</property>
                         <property name="placeholder_text" translatable="yes">buscar nome</property>
@@ -126,7 +129,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
-                        <property name="margin_start">20</property>
+                        <property name="margin_start">30</property>
                         <property name="image">addIcon</property>
                         <property name="always_show_image">True</property>
                         <signal name="clicked" handler="on_btnGoRegister_clicked" swapped="no"/>
@@ -151,13 +154,13 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="btnReloadList">
+                      <object class="GtkButton" id="btnGoEdit">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
-                        <property name="image">reloadIcon</property>
+                        <property name="image">editIcon</property>
                         <property name="always_show_image">True</property>
-                        <signal name="clicked" handler="on_btnReloadList_clicked" swapped="no"/>
+                        <signal name="clicked" handler="on_btnGoEdit_clicked" swapped="no"/>
                       </object>
                       <packing>
                         <property name="left_attach">3</property>
@@ -256,6 +259,8 @@
               <object class="GtkGrid">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
                 <property name="row_spacing">10</property>
                 <property name="column_spacing">5</property>
                 <child>
@@ -331,16 +336,17 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButtonBox">
+              <object class="GtkButtonBox" id="registerBtnBox">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="margin_left">5</property>
-                <property name="margin_right">5</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
                 <property name="margin_start">5</property>
                 <property name="margin_end">5</property>
                 <property name="margin_top">5</property>
                 <property name="margin_bottom">5</property>
                 <property name="spacing">5</property>
+                <property name="homogeneous">True</property>
                 <property name="layout_style">center</property>
                 <child>
                   <object class="GtkButton" id="btnGoBack">
@@ -359,14 +365,40 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="btnAddRegister">
-                    <property name="label" translatable="yes">Cadastrar</property>
+                  <object class="GtkStack" id="btnAddUpdateStack">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="image">registerIcon</property>
-                    <property name="always_show_image">True</property>
-                    <signal name="clicked" handler="on_btnAddRegister_clicked" swapped="no"/>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkButton" id="btnAddRegister">
+                        <property name="label" translatable="yes">Cadastrar</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="image">registerIcon</property>
+                        <property name="always_show_image">True</property>
+                        <signal name="clicked" handler="on_btnAddRegister_clicked" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="name">view_btnAddRegister</property>
+                        <property name="title" translatable="yes">page0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="btnUpdateRegister">
+                        <property name="label" translatable="yes">Salvar</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="image">saveIcon</property>
+                        <property name="always_show_image">True</property>
+                        <signal name="clicked" handler="on_btnUpdateRegister_clicked" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="name">view_btnUpdateRegister</property>
+                        <property name="title" translatable="yes">page1</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
                   </object>
                   <packing>
                     <property name="expand">True</property>
@@ -393,5 +425,10 @@
     <child type="titlebar">
       <placeholder/>
     </child>
+  </object>
+  <object class="GtkImage" id="saveIcon">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="icon_name">document-save</property>
   </object>
 </interface>
